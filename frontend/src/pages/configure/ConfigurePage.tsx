@@ -32,6 +32,7 @@ export default function ConfigurePage() {
 	const [stepError, setStepError] = useState<string | null>(null)
 
 	const roleOptions = config.domain ? DOMAIN_ROLE_MAP[config.domain] ?? [] : []
+	const focusAreaOptions = getFocusAreasForRole(config.role, config.domain)
 	const sliderValue = Math.min(20, Math.max(5, config.question_count))
 	const sliderProgress = ((sliderValue - 5) / 15) * 100
 
@@ -68,6 +69,17 @@ export default function ConfigurePage() {
 		}
 
 		setFocusAreas([...config.focus_areas, value])
+	}
+
+	const handleDomainChange = (domain: string): void => {
+		setDomain(domain)
+		setRole('')
+		setFocusAreas([])
+	}
+
+	const handleRoleChange = (role: string): void => {
+		setRole(role)
+		setFocusAreas([])
 	}
 
 	const handleSubmit = async (): Promise<void> => {
@@ -144,8 +156,7 @@ export default function ConfigurePage() {
 							className="field-input"
 							value={config.domain}
 							onChange={(event) => {
-								setDomain(event.target.value)
-								setRole('')
+								handleDomainChange(event.target.value)
 							}}
 						>
 							<option value="">Select domain</option>
@@ -163,7 +174,7 @@ export default function ConfigurePage() {
 							id="role-select"
 							className="field-input"
 							value={roleOptions.includes(config.role) ? config.role : ''}
-							onChange={(event) => setRole(event.target.value)}
+							onChange={(event) => handleRoleChange(event.target.value)}
 							disabled={roleOptions.length === 0}
 						>
 							<option value="">Select role</option>
@@ -183,7 +194,7 @@ export default function ConfigurePage() {
 							type="text"
 							placeholder="e.g. Staff Backend Engineer"
 							value={config.role}
-							onChange={(event) => setRole(event.target.value)}
+							onChange={(event) => handleRoleChange(event.target.value)}
 						/>
 					</div>
 				) : null}
@@ -257,7 +268,7 @@ export default function ConfigurePage() {
 
 						<p className="field-label">Focus Areas</p>
 						<div className="choice-grid">
-							{getFocusAreasForRole(config.role).map(
+							{focusAreaOptions.map(
 								(area) => (
 									<button
 										key={area}
@@ -322,7 +333,7 @@ export default function ConfigurePage() {
 							}}
 							disabled={isSubmitting}
 						>
-							{isSubmitting ? 'Creating Session...' : 'Start Interview'}
+							{isSubmitting ? 'Creating Session...' : 'Configure Interview'}
 						</button>
 					)}
 				</div>

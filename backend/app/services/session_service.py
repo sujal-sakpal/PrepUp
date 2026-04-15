@@ -32,6 +32,7 @@ class SessionService:
 			"started_at": None,
 			"ended_at": None,
 			"duration_seconds": 0,
+			"qa_pairs": [],
 			"created_at": now,
 			"updated_at": now,
 		}
@@ -75,6 +76,117 @@ class SessionService:
 
 		return self._to_session_response(session_doc)
 
+	async def upsert_transcript_answer(
+		self,
+		user_id: str,
+		session_id: str,
+		question_index: int | None,
+		transcription: str,
+		question_text: str | None = None,
+		question_type: str = "opening",
+		recorded_duration_seconds: float | None = None,
+	) -> int:
+		"""Persist or update transcript text for a given session/question index.
+		
+		If question_index is None, auto-calculates it as the current length of qa_pairs.
+		Returns the question_index that was stored.
+		"""
+		user_object_id = self._to_object_id(user_id)
+		session_object_id = self._to_object_id(session_id)
+		now = datetime.now(timezone.utc)
+
+		session_doc = await self.collection.find_one(
+			{"_id": session_object_id, "user_id": user_object_id}
+		)
+		if session_doc is None:
+			raise NotFoundError("Session")
+
+		qa_pairs = list(session_doc.get("qa_pairs", []))
+		resolved_question_index = question_index if question_index is not None else len(qa_pairs)
+		
+		payload = {
+			"question_index": resolved_question_index,
+			"question": question_text,
+			"question_type": question_type,
+			"transcription": transcription,
+			"recorded_duration_seconds": recorded_duration_seconds,
+			"evaluation": None,
+			"created_at": now,
+		}
+
+		qa_pairs.append(payload)
+
+		await self.collection.update_one(
+			{"_id": session_object_id, "user_id": user_object_id},
+			{
+				"$set": {
+					"qa_pairs": qa_pairs,
+					"status": "in_progress",
+					"started_at": session_doc.get("started_at") or now,
+					"updated_at": now,
+				}
+			},
+		)
+		return resolved_question_index
+
+	async def delete_session(self, user_id: str, session_id: str) -> None:
+		"""Delete an interview session owned by the authenticated user."""
+		user_object_id = self._to_object_id(user_id)
+		session_object_id = self._to_object_id(session_id)
+
+		result = await self.collection.delete_one(
+			{"_id": session_object_id, "user_id": user_object_id}
+		)
+		if result.deleted_count == 0:
+			raise NotFoundError("Session")
+
+	async def set_final_analysis(
+		self, user_id: str, session_id: str, final_analysis: dict | object
+	) -> None:
+		"""Set the final analysis for a completed session."""
+		from app.models.session import FinalAnalysis
+
+		user_object_id = self._to_object_id(user_id)
+		session_object_id = self._to_object_id(session_id)
+
+		# Convert to dict if it's a Pydantic model
+		if hasattr(final_analysis, "model_dump"):
+			analysis_dict = final_analysis.model_dump()
+		else:
+			analysis_dict = final_analysis
+
+		now = datetime.now(timezone.utc)
+
+		await self.collection.update_one(
+			{"_id": session_object_id, "user_id": user_object_id},
+			{
+				"$set": {
+					"final_analysis": analysis_dict,
+					"status": "completed",
+					"ended_at": now,
+					"updated_at": now,
+				}
+			},
+		)
+
+	async def update_qa_pair_evaluation(
+		self, user_id: str, session_id: str, question_index: int, evaluation: dict
+	) -> None:
+		"""Update evaluation for a specific Q&A pair."""
+		user_object_id = self._to_object_id(user_id)
+		session_object_id = self._to_object_id(session_id)
+		now = datetime.now(timezone.utc)
+
+		await self.collection.update_one(
+			{"_id": session_object_id, "user_id": user_object_id},
+			{
+				"$set": {
+					f"qa_pairs.{question_index}.evaluation": evaluation,
+					"updated_at": now,
+				}
+			},
+		)
+
 	@staticmethod
 	def _to_object_id(raw_id: str) -> ObjectId:
 		"""Convert string IDs into ObjectId, raising NotFound for invalid IDs."""
@@ -94,6 +206,8 @@ class SessionService:
 			started_at=session_doc.get("started_at"),
 			ended_at=session_doc.get("ended_at"),
 			duration_seconds=session_doc.get("duration_seconds", 0),
+			qa_pairs=session_doc.get("qa_pairs", []),
+			final_analysis=session_doc.get("final_analysis"),
 			created_at=session_doc["created_at"],
 			updated_at=session_doc["updated_at"],
 		)

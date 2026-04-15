@@ -29,4 +29,8 @@ export const sessionsApi = {
 		const { data } = await apiClient.get<SessionResponse>(`/sessions/${sessionId}`)
 		return data
 	},
+
+	deleteSession: async (sessionId: string): Promise<void> => {
+		await apiClient.delete(`/sessions/${sessionId}`)
+	},
 } as const

@@ -10,13 +10,16 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import close_mongo_connection, connect_to_mongo
 from app.exceptions import AppError
+from app.routers.analysis import router as analysis_router
 from app.routers.auth import router as auth_router
 from app.routers.sessions import router as session_router
+from app.services.audio_service import AudioService
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 	"""Manage application startup and shutdown resources."""
+	AudioService.validate_runtime_configuration()
 	await connect_to_mongo()
 	yield
 	await close_mongo_connection()
@@ -55,3 +58,4 @@ async def app_error_handler(_: Request, exc: AppError) -> JSONResponse:
 
 app.include_router(auth_router, prefix=settings.api_prefix)
 app.include_router(session_router,prefix=settings.api_prefix)
+app.include_router(analysis_router, prefix=settings.api_prefix)

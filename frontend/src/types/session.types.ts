@@ -18,6 +18,43 @@ export interface SessionCreateRequest {
 	config: InterviewConfig
 }
 
+export interface AnswerEvaluation {
+	score: number
+	strengths: string[]
+	weaknesses: string[]
+	feedback: string
+	keywords_mentioned: string[]
+	keywords_missed: string[]
+}
+
+export interface SessionQAPair {
+	question_index: number
+	question: string | null
+	question_type: 'opening' | 'followup' | 'closing'
+	transcription: string
+	recorded_duration_seconds: number | null
+	evaluation: AnswerEvaluation | null
+	created_at: string
+}
+
+export interface CategoryScores {
+	technical_accuracy: number
+	communication: number
+	problem_solving: number
+	depth_of_knowledge: number
+	confidence: number
+}
+
+export interface FinalAnalysis {
+	overall_score: number
+	category_scores: CategoryScores
+	top_strengths: string[]
+	improvement_areas: string[]
+	detailed_feedback: string
+	recommended_resources: string[]
+	hire_recommendation: 'strong_hire' | 'hire' | 'maybe' | 'no_hire'
+}
+
 export interface SessionResponse {
 	id: string
 	user_id: string
@@ -26,6 +63,8 @@ export interface SessionResponse {
 	started_at: string | null
 	ended_at: string | null
 	duration_seconds: number
+	qa_pairs: SessionQAPair[]
+	final_analysis: FinalAnalysis | null
 	created_at: string
 	updated_at: string
 }

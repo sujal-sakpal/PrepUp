@@ -43,3 +43,14 @@ async def get_session_by_id(
 	"""Get one interview session owned by the authenticated user."""
 	service = SessionService(db)
 	return await service.get_session_by_id(current_user.id, session_id)
+
+
+@router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_session(
+	session_id: str,
+	current_user: UserResponse = Depends(get_current_user),
+	db: AsyncIOMotorDatabase = Depends(get_db),
+) -> None:
+	"""Delete an interview session owned by the authenticated user."""
+	service = SessionService(db)
+	await service.delete_session(current_user.id, session_id)
