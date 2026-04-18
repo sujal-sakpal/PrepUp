@@ -74,6 +74,46 @@
   background: rgba(10, 20, 34, 0.72);
 }
 
+.profile-session-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.25rem;
+  border-radius: 0.68rem;
+  border: 1px solid rgba(128, 165, 221, 0.4);
+  background: rgba(13, 23, 40, 0.9);
+  color: #e8f3ff;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 0.86rem;
+  letter-spacing: 0.01em;
+  padding: 0.44rem 0.72rem;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.profile-session-action:hover {
+  transform: translateY(-1px);
+  border-color: rgba(144, 196, 255, 0.7);
+  box-shadow: 0 10px 24px -18px rgba(81, 156, 255, 0.8);
+}
+
+.profile-session-action:focus-visible {
+  outline: 2px solid rgba(108, 179, 255, 0.9);
+  outline-offset: 2px;
+}
+
+.profile-session-action--continue {
+  background: linear-gradient(135deg, rgba(34, 125, 255, 0.92), rgba(36, 184, 255, 0.9));
+  border-color: rgba(106, 186, 255, 0.75);
+  color: #ffffff;
+}
+
+.profile-session-action--analysis {
+  background: linear-gradient(135deg, rgba(14, 88, 208, 0.9), rgba(16, 138, 224, 0.85));
+  border-color: rgba(112, 182, 255, 0.66);
+  color: #f4f9ff;
+}
+
 .profile-details-list span {
   color: #96b5dd;
 }

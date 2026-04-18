@@ -28,6 +28,12 @@
 }
 
 .interview-room__meta {
+  display: grid;
+  justify-items: end;
+  gap: 0.52rem;
+}
+
+.interview-meta-row {
   display: flex;
   justify-content: flex-end;
 }
@@ -230,6 +236,11 @@
   color: #bfd0e8;
 }
 
+.chat-turn {
+  display: grid;
+  gap: 0.5rem;
+}
+
 .chat-bubble {
   border-radius: 1rem;
   padding: 0.85rem 0.95rem;
@@ -282,7 +293,31 @@
 }
 
 .chat-feedback p {
-  margin: 0;
+  margin: 0.48rem 0 0;
+  line-height: 1.5;
+}
+
+.chat-feedback__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.chat-feedback__head strong {
+  color: #eaf3ff;
+}
+
+.chat-feedback__head span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.52rem;
+  background: rgba(94, 166, 255, 0.15);
+  border: 1px solid rgba(94, 166, 255, 0.3);
+  color: #c9defe;
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .interview-actions {
@@ -297,6 +332,7 @@
   display: flex;
   flex-wrap: wrap;
   max-width: 560px;
+  row-gap: 0.52rem;
 }
 
 .session-progress-panel {
@@ -356,5 +392,13 @@
 
   .interview-room__hero {
     display: grid;
+  }
+
+  .interview-room__meta {
+    justify-items: start;
+  }
+
+  .interview-meta-row {
+    justify-content: flex-start;
   }
 }

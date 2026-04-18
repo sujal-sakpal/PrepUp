@@ -599,6 +599,8 @@ export default function InterviewRoomPage() {
 							<span className="meta-pill">{chatEntries.length} turns</span>
 						</div>
 
+						<br />
+
 						<div className="interview-chat-panel__body">
 							{isSessionLoading ? (
 								<p className="chat-empty">Loading transcript history...</p>
@@ -636,8 +638,10 @@ export default function InterviewRoomPage() {
 
 										{entry.evaluationScore !== null && entry.evaluationFeedback && (
 											<div className="chat-feedback">
-												<strong>Feedback</strong>
-												<span>Score {entry.evaluationScore.toFixed(2)}</span>
+												<div className="chat-feedback__head">
+													<strong>Feedback</strong>
+													<span>Score {entry.evaluationScore.toFixed(2)}</span>
+												</div>
 												<p>{entry.evaluationFeedback}</p>
 											</div>
 										)}

@@ -137,7 +137,10 @@ export default function ProfilePage() {
 														{session.config.interview_type} · {session.config.difficulty} · {session.qa_pairs.length} answers
 													</p>
 													<p>
-														<Link to={session.final_analysis ? `/analysis/${session.id}` : `/interview/${session.id}`}>
+														<Link
+															className={`profile-session-action ${session.final_analysis ? 'profile-session-action--analysis' : 'profile-session-action--continue'}`}
+															to={session.final_analysis ? `/analysis/${session.id}` : `/interview/${session.id}`}
+														>
 															{session.final_analysis ? 'Open analysis' : 'Continue interview'}
 														</Link>
 													</p>
@@ -180,7 +183,6 @@ export default function ProfilePage() {
 								</div>
 								<div className="analysis-chip-list">
 									<Link className="analysis-chip analysis-chip--neutral" to="/dashboard">Dashboard</Link>
-									<Link className="analysis-chip analysis-chip--neutral" to="/configure">Configure</Link>
 									<Link className="analysis-chip analysis-chip--neutral" to="/configure">Start Interview</Link>
 								</div>
 							</div>

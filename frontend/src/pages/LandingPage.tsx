@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useAuthStore } from '@/store/authStore'
@@ -10,6 +11,38 @@ import './LandingPage.css'
 export function LandingPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
+
+  useEffect(() => {
+    const roadmapItems = Array.from(document.querySelectorAll<HTMLElement>('.roadmap-card'))
+    if (roadmapItems.length === 0) {
+      return
+    }
+
+    roadmapItems.forEach((item, index) => {
+      item.style.setProperty('--roadmap-delay', `${index * 130}ms`)
+    })
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return
+          }
+
+          entry.target.classList.add('is-visible')
+          observer.unobserve(entry.target)
+        })
+      },
+      {
+        threshold: 0.18,
+        rootMargin: '0px 0px -8% 0px',
+      },
+    )
+
+    roadmapItems.forEach((item) => observer.observe(item))
+
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <main className="page page-landing">
@@ -51,100 +84,70 @@ export function LandingPage() {
           )}
         </div>
 
-        <div className="hero-stats" aria-label="Platform summary">
-          <div>
-            <strong>10+</strong>
-            <span>Domains</span>
-          </div>
-          <div>
-            <strong>Adaptive</strong>
-            <span>Questioning</span>
-          </div>
-          <div>
-            <strong>Live</strong>
-            <span>Progress Tracking</span>
-          </div>
+        <div className="feature-grid hero-feature-grid" aria-label="Core features">
+          <article className="feature-card">
+            <h2>Role-specific setup</h2>
+            <p>
+              Choose domain, role, difficulty, and interview type so each session matches what you
+              are preparing for.
+            </p>
+          </article>
+
+          <article className="feature-card">
+            <h2>Voice-first interview flow</h2>
+            <p>
+              Speak your answers naturally and get a smooth conversational interview loop powered by
+              real-time AI evaluation.
+            </p>
+          </article>
+
+          <article className="feature-card">
+            <h2>Progress analytics</h2>
+            <p>
+              Review strengths, weak areas, and score trends across sessions to measure growth and
+              plan focused practice.
+            </p>
+          </article>
         </div>
       </section>
 
-      <section className="feature-grid" aria-label="Core features">
-        <article className="feature-card">
-          <h2>Role-specific setup</h2>
-          <p>
-            Choose domain, role, difficulty, and interview type so each session matches what you
-            are preparing for.
-          </p>
-        </article>
 
-        <article className="feature-card">
-          <h2>Voice-first interview flow</h2>
-          <p>
-            Speak your answers naturally and get a smooth conversational interview loop powered by
-            real-time AI evaluation.
-          </p>
-        </article>
+      <section className="roadmap" aria-label="How it works roadmap">
+        <div className="roadmap-head">
+          <p className="eyebrow">Roadmap</p>
+          <h2>A repeatable interview improvement loop.</h2>
+        </div>
 
-        <article className="feature-card">
-          <h2>Progress analytics</h2>
-          <p>
-            Review strengths, weak areas, and score trends across sessions to measure growth and
-            plan focused practice.
-          </p>
-        </article>
+        <div className="roadmap-list">
+          <article className="roadmap-card">
+            <span className="roadmap-step">01</span>
+            <h3>Configure with precision</h3>
+            <p>
+              Select domain, role, difficulty, and focus areas so the interview reflects what you
+              are actually preparing for.
+            </p>
+          </article>
+
+          <article className="roadmap-card">
+            <span className="roadmap-step">02</span>
+            <h3>Practice in a live room</h3>
+            <p>
+              Answer naturally with your voice while AI adapts follow-up questions based on your
+              previous responses.
+            </p>
+          </article>
+
+          <article className="roadmap-card">
+            <span className="roadmap-step">03</span>
+            <h3>Improve with clear signals</h3>
+            <p>
+              Track category-wise scoring, strengths, improvement areas, and targeted next steps
+              after every session.
+            </p>
+          </article>
+        </div>
       </section>
 
-      <section className="highlight-strip" aria-label="Value proposition">
-        <p>
-          PrepUp turns random interview prep into a repeatable system: configure, perform, review,
-          and improve.
-        </p>
-      </section>
-
-      <section className="process-grid" aria-label="How it works">
-        <article className="process-card">
-          <span className="process-step">01</span>
-          <h2>Configure with precision</h2>
-          <p>
-            Select domain, role, difficulty, and focus areas so the interview reflects what you are
-            actually preparing for.
-          </p>
-        </article>
-
-        <article className="process-card">
-          <span className="process-step">02</span>
-          <h2>Practice in a live room</h2>
-          <p>
-            Answer naturally with your voice while AI adapts follow-up questions based on your
-            previous responses.
-          </p>
-        </article>
-
-        <article className="process-card">
-          <span className="process-step">03</span>
-          <h2>Improve with clear signals</h2>
-          <p>
-            Track category-wise scoring, strengths, improvement areas, and targeted next steps after
-            every session.
-          </p>
-        </article>
-      </section>
-
-      <section className="proof-grid" aria-label="Platform outcomes">
-        <article className="proof-card">
-          <h2>Built for consistency</h2>
-          <p>
-            Structured sessions remove randomness from interview prep and make progress measurable
-            week over week.
-          </p>
-        </article>
-        <article className="proof-card">
-          <h2>Designed for confidence</h2>
-          <p>
-            Practice concise communication, technical reasoning, and follow-up handling under
-            realistic interview conditions.
-          </p>
-        </article>
-      </section>
 
       <section className="landing-cta" aria-label="Call to action">
         <div>
