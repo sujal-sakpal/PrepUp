@@ -91,6 +91,10 @@ Context:
 
 Rules:
 {style_rules}
+- The FIRST question MUST ask for a brief introduction and the candidate's most relevant past experience.
+- The first question must explicitly cover both: (a) self-introduction and (b) past experience relevant to the role/domain.
+- Questions 2 and 3 should naturally build from that background and prioritize core concepts for the role plus the user-selected focus areas.
+- If focus areas are provided, ensure at least one of questions 2 or 3 directly targets one focus area.
 - Keep questions concise and conversational.
 - Do not include numbering in the question text.
 
@@ -111,6 +115,7 @@ Example format:
 		interview_type: str,
 		current_score: float,
 		questions_remaining: int,
+		focus_areas: list[str] | None = None,
 		conversation_summary: str = "",
 	) -> str:
 		"""Generate the next question dynamically based on performance.
@@ -128,6 +133,7 @@ Example format:
 		"""
 		difficulty_hint = "easier" if current_score < 0.5 else "moderate" if current_score < 0.75 else "harder"
 		style_rules = self._question_style_rules(interview_type)
+		focus_str = ", ".join(focus_areas) if focus_areas else "none specified"
 
 		prompt = f"""You are an expert interviewer conducting a {interview_type} interview.
 
@@ -137,6 +143,7 @@ Context:
 - Current Performance Score: {current_score:.2f}/1.0
 - Suggested Difficulty: {difficulty_hint}
 - Questions Remaining: {questions_remaining}
+- User Focus Areas: {focus_str}
 
 Conversation Summary:
 {conversation_summary if conversation_summary else "(First question)"}
@@ -145,15 +152,23 @@ Generate the next interview question. The question should:
 1. Be appropriate for the role and domain
 2. Adjust difficulty based on current performance
 3. Build on the conversation naturally
-4. Be concise and clear
+4. Focus on core concepts for the role and prioritize user-selected focus areas when provided
+5. Start with a short acknowledgment of the candidate's previous answer to make the conversation feel natural
+6. If Questions Remaining is 1, the question MUST be a closing question that wraps up the interview.
 
 Rules:
 {style_rules}
+- Output a single string in "question" that contains:
+  a) one short acknowledgment sentence tied to the previous answer,
+  b) then one follow-up interview question.
+- If Questions Remaining is 1, the follow-up must be closing-oriented, such as asking for final thoughts, a summary of strengths, or any questions the candidate has.
+- Keep total output to at most 2 sentences.
+- Do not use bullet points, numbering, or labels.
 
 Respond with ONLY a valid JSON object with a "question" field. No other text.
 
 Example format:
-{{"question": "Your next question here?"}}"""
+{{"question": "Thanks for explaining your API scaling work. How would you design idempotent retry handling for payment failures in a distributed system?"}}"""
 
 		response = await self._call_groq_json(
 			prompt,

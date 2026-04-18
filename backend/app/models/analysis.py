@@ -116,6 +116,10 @@ class NextQuestionRequest(BaseModel):
 	interview_type: str
 	current_score: float = Field(..., ge=0.0, le=1.0)
 	questions_remaining: int = Field(..., ge=1)
+	focus_areas: list[str] = Field(
+		default_factory=list,
+		description="User-selected focus areas to prioritize in follow-up questions",
+	)
 	conversation_summary: str = Field(default="", description="Summary of previous answers")
 
 

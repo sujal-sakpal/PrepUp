@@ -8,6 +8,8 @@ import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/store/authStore'
 import { registerSchema, type RegisterFormInput } from '@/validators/auth.validators'
 
+import './AuthPages.css'
+
 /**
  * Registration page that creates a new account and immediately starts a session.
  */

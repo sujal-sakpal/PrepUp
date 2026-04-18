@@ -195,6 +195,7 @@ async def generate_next_question(
 			interview_type=payload.interview_type,
 			current_score=payload.current_score,
 			questions_remaining=payload.questions_remaining,
+			focus_areas=payload.focus_areas,
 			conversation_summary=payload.conversation_summary,
 		)
 		return NextQuestionResponse(question=question)

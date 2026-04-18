@@ -9,6 +9,7 @@ import ConfigurePage from '@/pages/configure/ConfigurePage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import AnalysisPage from '@/pages/analysis/AnalysisPage'
 import InterviewRoomPage from '@/pages/interview/InterviewRoomPage'
+import ProfilePage from '@/pages/profile/ProfilePage'
 
 import './App.css'
 
@@ -24,6 +25,7 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/configure" element={<ConfigurePage />} />
           <Route path="/interview/:sessionId" element={<InterviewRoomPage />} />
           <Route path="/analysis/:sessionId" element={<AnalysisPage />} />

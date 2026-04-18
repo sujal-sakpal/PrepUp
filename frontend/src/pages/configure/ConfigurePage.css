@@ -1,0 +1,109 @@
+.configure-card {
+  width: min(840px, 100%);
+}
+
+.wizard-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.wizard-step {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(139, 169, 209, 0.28);
+  color: #90afda;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  background: rgba(10, 18, 32, 0.82);
+}
+
+.wizard-step.active {
+  border-color: #0b6bdd;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0f60d9, #0b8ee8);
+}
+
+.wizard-section {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.choice-grid {
+  margin-top: 0.2rem;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.field-slider {
+  width: 100%;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: rgba(122, 150, 189, 0.34);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0.55rem 0 0.35rem;
+}
+
+.field-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f60d9, #0b8ee8);
+  cursor: pointer;
+  border: 2px solid #ffffff;
+}
+
+.field-slider::-moz-range-thumb {
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f60d9, #0b8ee8);
+  cursor: pointer;
+  border: 2px solid #ffffff;
+}
+
+.slider-shell {
+  margin-bottom: 0.35rem;
+}
+
+.slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0.1rem;
+  color: #8faed9;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.required {
+  color: #bb2238;
+  font-weight: 700;
+}
+
+.wizard-actions {
+  margin-top: 1.35rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(139, 169, 209, 0.34);
+}
+
+.dashboard-meta {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border-radius: 0.8rem;
+  border: 1px dashed rgba(139, 169, 209, 0.34);
+  background: rgba(10, 18, 32, 0.72);
+}
+
+.dashboard-meta p {
+  margin: 0.35rem 0;
+  color: #c6dafb;
+}

@@ -6,6 +6,8 @@ import { useAuthStore } from '@/store/authStore'
 import type { SessionResponse } from '@/types/session.types'
 import { formatLabel } from '@/utils/formatters'
 
+import './DashboardPage.css'
+
 interface DeleteConfirmation {
 	isOpen: boolean
 	sessionId: string | null
@@ -136,7 +138,7 @@ export default function DashboardPage() {
 				<section className="dashboard-card">
 					<h1>Welcome, {user?.full_name ?? 'User'}.</h1>
 					<p className="hero-copy">Loading your interview history...</p>
-					<br />
+
 					<div className="dashboard-actions">
 						<Link to="/configure" className="btn btn-primary">
 							Start Interview
@@ -156,8 +158,6 @@ export default function DashboardPage() {
 						? 'Start a new interview session or continue exploring your progress insights.'
 						: 'Start with your first interview.'}
 				</p>
-
-                <br />
 
 				<div className="dashboard-actions">
 					<Link to="/configure" className="btn btn-primary">

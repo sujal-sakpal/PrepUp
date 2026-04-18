@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 
 import { useAuthStore } from '@/store/authStore'
 
+import './LandingPage.css'
+
 /**
  * Public landing page that introduces the platform and routes users to auth flows.
  */
@@ -97,6 +99,96 @@ export function LandingPage() {
           and improve.
         </p>
       </section>
+
+      <section className="process-grid" aria-label="How it works">
+        <article className="process-card">
+          <span className="process-step">01</span>
+          <h2>Configure with precision</h2>
+          <p>
+            Select domain, role, difficulty, and focus areas so the interview reflects what you are
+            actually preparing for.
+          </p>
+        </article>
+
+        <article className="process-card">
+          <span className="process-step">02</span>
+          <h2>Practice in a live room</h2>
+          <p>
+            Answer naturally with your voice while AI adapts follow-up questions based on your
+            previous responses.
+          </p>
+        </article>
+
+        <article className="process-card">
+          <span className="process-step">03</span>
+          <h2>Improve with clear signals</h2>
+          <p>
+            Track category-wise scoring, strengths, improvement areas, and targeted next steps after
+            every session.
+          </p>
+        </article>
+      </section>
+
+      <section className="proof-grid" aria-label="Platform outcomes">
+        <article className="proof-card">
+          <h2>Built for consistency</h2>
+          <p>
+            Structured sessions remove randomness from interview prep and make progress measurable
+            week over week.
+          </p>
+        </article>
+        <article className="proof-card">
+          <h2>Designed for confidence</h2>
+          <p>
+            Practice concise communication, technical reasoning, and follow-up handling under
+            realistic interview conditions.
+          </p>
+        </article>
+      </section>
+
+      <section className="landing-cta" aria-label="Call to action">
+        <div>
+          <p className="eyebrow">Ready to level up?</p>
+          <h2>Start one focused mock interview this week.</h2>
+          <p className="hero-copy">
+            Keep momentum with a repeatable interview routine and visible progress over time.
+          </p>
+        </div>
+        <div className="landing-cta-actions">
+          {isAuthenticated ? (
+            <>
+              <Link className="btn btn-primary" to="/configure">
+                Configure Session
+              </Link>
+              <Link className="btn btn-ghost" to="/dashboard">
+                View Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link className="btn btn-primary" to="/register">
+                Create Free Account
+              </Link>
+              <Link className="btn btn-ghost" to="/login">
+                Sign In
+              </Link>
+            </>
+          )}
+        </div>
+      </section>
+
+      <footer className="landing-footer" aria-label="Site footer">
+        <div className="footer-brand">
+          <strong>PrepUp</strong>
+          <p>AI Interview Practice Platform</p>
+        </div>
+        <div className="footer-links">
+          <Link to="/">Home</Link>
+          {isAuthenticated ? <Link to="/dashboard">Dashboard</Link> : <Link to="/register">Get Started</Link>}
+          {isAuthenticated ? <Link to="/configure">Configure</Link> : <Link to="/login">Login</Link>}
+        </div>
+        <p className="footer-note">© {new Date().getFullYear()} PrepUp. All rights reserved.</p>
+      </footer>
     </main>
   )
 }

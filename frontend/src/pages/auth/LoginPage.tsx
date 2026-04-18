@@ -8,6 +8,8 @@ import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/store/authStore'
 import { loginSchema, type LoginFormInput } from '@/validators/auth.validators'
 
+import './AuthPages.css'
+
 /**
  * Login page that authenticates a user and stores token/session state.
  */

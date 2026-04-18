@@ -8,6 +8,8 @@ import { useConfigStore } from '@/store/configStore'
 import type { DifficultyLevel, InterviewType } from '@/types/session.types'
 import { formatLabel } from '@/utils/formatters'
 
+import './ConfigurePage.css'
+
 const INTERVIEW_TYPES: InterviewType[] = ['technical', 'behavioral', 'mixed', 'case_study']
 const DIFFICULTIES: DifficultyLevel[] = ['easy', 'medium', 'hard', 'adaptive']
 
@@ -127,7 +129,7 @@ export default function ConfigurePage() {
 	}
 
 	return (
-		<main className="page page-dashboard">
+		<main className="page page-configure">
 			<section className="dashboard-card configure-card">
 				<p className="eyebrow">Interview Setup</p>
 				<h1>Configure Your Next Interview</h1>

@@ -1,0 +1,201 @@
+.page-dashboard .dashboard-card:first-child {
+  position: sticky;
+  top: 5.3rem;
+}
+
+.page-dashboard > .dashboard-card:only-child {
+  grid-column: 1 / -1;
+  max-width: 720px;
+}
+
+.page-dashboard > .dashboard-card:first-child .dashboard-actions {
+  margin-top: 1.15rem;
+}
+
+.sessions-section {
+  width: 100%;
+}
+
+.sessions-section h2 {
+  margin: 0.5rem 0 1rem;
+  font-size: 1.3rem;
+  color: #eef5ff;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: linear-gradient(145deg, rgba(14, 26, 45, 0.88), rgba(10, 18, 34, 0.92));
+  border: 1px solid rgba(139, 169, 209, 0.24);
+  border-radius: 0.8rem;
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #58bcff;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #9bb6da;
+  font-weight: 500;
+}
+
+.sessions-table {
+  overflow-x: auto;
+  border: 1px solid rgba(139, 169, 209, 0.22);
+  border-radius: 0.8rem;
+  background: rgba(8, 15, 27, 0.75);
+}
+
+.sessions-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.sessions-table thead {
+  background: rgba(20, 37, 61, 0.75);
+  border-bottom: 1px solid rgba(139, 169, 209, 0.22);
+}
+
+.sessions-table th {
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  font-weight: 700;
+  color: #e5f1ff;
+}
+
+.sessions-table tbody tr {
+  border-bottom: 1px solid rgba(139, 169, 209, 0.16);
+}
+
+.sessions-table tbody tr:hover {
+  background: rgba(26, 46, 74, 0.48);
+}
+
+.sessions-table td {
+  padding: 0.7rem 0.8rem;
+  color: #c6dafb;
+}
+
+.sessions-table .cell-action {
+  min-width: 9rem;
+}
+
+.sessions-table .session-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 8.5rem;
+  text-align: center;
+}
+
+.sessions-table .cell-role {
+  font-weight: 600;
+}
+
+.sessions-table .badge {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.sessions-table .badge-configured {
+  background: rgba(31, 111, 223, 0.18);
+  color: #7ec4ff;
+  border: 1px solid rgba(96, 168, 255, 0.4);
+}
+
+.sessions-table .badge-in_progress {
+  background: rgba(200, 148, 41, 0.18);
+  color: #ffd595;
+  border: 1px solid rgba(255, 205, 111, 0.46);
+}
+
+.sessions-table .badge-completed {
+  background: rgba(46, 158, 103, 0.16);
+  color: #95efc2;
+  border: 1px solid rgba(117, 214, 161, 0.42);
+}
+
+.sessions-table .badge-abandoned {
+  background: rgba(186, 72, 72, 0.18);
+  color: #ffb2b2;
+  border: 1px solid rgba(235, 134, 134, 0.4);
+}
+
+.session-actions-group {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.session-score-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(117, 214, 161, 0.42);
+  background: rgba(46, 158, 103, 0.16);
+  color: #95efc2;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 0.22rem 0.52rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 18, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: linear-gradient(180deg, rgba(14, 26, 44, 0.96), rgba(9, 16, 30, 0.96));
+  border: 1px solid rgba(139, 169, 209, 0.24);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  max-width: 420px;
+  width: min(420px, 90vw);
+}
+
+.modal-content h3,
+.modal-content p {
+  color: #d7e8ff;
+}
+
+.modal-content h3 {
+  margin: 0 0 0.8rem;
+}
+
+.modal-content p {
+  margin: 0 0 1.2rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1120px) {
+  .page-dashboard .dashboard-card:first-child {
+    position: static;
+  }
+}

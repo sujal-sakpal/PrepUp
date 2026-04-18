@@ -17,6 +17,7 @@ export interface NextQuestionRequest {
 	interview_type: string
 	current_score: number
 	questions_remaining: number
+	focus_areas?: string[]
 	conversation_summary?: string
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { createTranscription, llmApi } from '@/api/analysis'
@@ -8,8 +8,22 @@ import { useAudioRecorder } from '@/hooks/useAudioRecorder'
 import type { SessionResponse, SessionQAPair } from '@/types/session.types'
 import type { TranscriptionErrorResponse, TranscriptionResponse } from '@/types/analysis.types'
 
+import './InterviewRoomPage.css'
+
 type RecorderUiState = 'idle' | 'recording' | 'processing' | 'done' | 'failed'
 type QuestionType = 'opening' | 'followup' | 'closing'
+
+type ChatEntry = {
+	id: string
+	questionIndex: number
+	question: string
+	answer: string | null
+	questionType: QuestionType
+	evaluationScore: number | null
+	evaluationFeedback: string | null
+	durationSeconds: number | null
+	isLive: boolean
+}
 
 function summarizeConversation(entries: SessionQAPair[]): string {
 	if (entries.length === 0) {
@@ -59,8 +73,12 @@ function getFriendlyErrorMessage(errorResponse: TranscriptionErrorResponse | nul
 	return errorResponse.error.message
 }
 
+function formatQuestionType(questionType: QuestionType): string {
+	return questionType.replace('_', ' ')
+}
+
 /**
- * Interview room scaffold for Phase 3 routing.
+ * Zoom-style interview room for live AI mock interviews.
  */
 export default function InterviewRoomPage() {
 	const { sessionId } = useParams<{ sessionId: string }>()
@@ -82,8 +100,9 @@ export default function InterviewRoomPage() {
 	const [isQuestionLoading, setIsQuestionLoading] = useState(false)
 	const [currentQuestion, setCurrentQuestion] = useState<string | null>(null)
 	const [currentQuestionType, setCurrentQuestionType] = useState<QuestionType>('opening')
+	const [isQuestionSpeaking, setIsQuestionSpeaking] = useState(false)
+	const spokenQuestionRef = useRef<string | null>(null)
 
-	const hasSessionId = Boolean(sessionId)
 	const completedQuestions = sessionTranscripts.length
 	const configuredQuestionCount = sessionData?.config.question_count ?? null
 	const isQuestionLimitReached =
@@ -97,10 +116,83 @@ export default function InterviewRoomPage() {
 			? configuredQuestionCount
 			: Math.max(completedQuestions, 1)
 	const progressPercent = Math.min((completedQuestions / progressDenominator) * 100, 100)
+	const hasSpeechSynthesis = typeof window !== 'undefined' && 'speechSynthesis' in window
 
 	const canStartRecording = useMemo(
 		() => !isRecording && uiState !== 'processing' && !isQuestionLimitReached && !isQuestionLoading,
 		[isQuestionLimitReached, isQuestionLoading, isRecording, uiState],
+	)
+
+	const chatEntries = useMemo<ChatEntry[]>(() => {
+		const entries: ChatEntry[] = sessionTranscripts.map((pair, index) => ({
+			id: `${pair.question_index}-${pair.created_at}-${index}`,
+			questionIndex: pair.question_index + 1,
+			question: pair.question ?? `Question ${pair.question_index + 1}`,
+			answer: pair.transcription,
+			questionType: pair.question_type,
+			evaluationScore: pair.evaluation?.score ?? null,
+			evaluationFeedback: pair.evaluation?.feedback ?? null,
+			durationSeconds: pair.recorded_duration_seconds,
+			isLive: false,
+		}))
+
+		if (currentQuestion && !isQuestionLimitReached) {
+			entries.push({
+				id: 'live-question',
+				questionIndex: displayQuestionNumber,
+				question: currentQuestion,
+				answer: null,
+				questionType: currentQuestionType,
+				evaluationScore: null,
+				evaluationFeedback: null,
+				durationSeconds: null,
+				isLive: true,
+			})
+		}
+
+		return entries
+	}, [
+		currentQuestion,
+		currentQuestionType,
+		displayQuestionNumber,
+		isQuestionLimitReached,
+		sessionTranscripts,
+	])
+
+	const speakCurrentQuestion = useCallback(
+		(questionText: string, force = false) => {
+			if (
+				typeof window === 'undefined' ||
+				typeof SpeechSynthesisUtterance === 'undefined' ||
+				!window.speechSynthesis
+			) {
+				setIsQuestionSpeaking(false)
+				return
+			}
+
+			if (!force && spokenQuestionRef.current === questionText) {
+				return
+			}
+
+			window.speechSynthesis.cancel()
+			const utterance = new SpeechSynthesisUtterance(questionText)
+			utterance.lang = sessionData?.config.language || 'en-US'
+			utterance.rate = 1.02
+			utterance.pitch = 1
+			utterance.onstart = () => {
+				spokenQuestionRef.current = questionText
+				setIsQuestionSpeaking(true)
+			}
+			utterance.onend = () => {
+				setIsQuestionSpeaking(false)
+			}
+			utterance.onerror = () => {
+				setIsQuestionSpeaking(false)
+			}
+
+			window.speechSynthesis.speak(utterance)
+		},
+		[sessionData?.config.language],
 	)
 
 	useEffect(() => {
@@ -108,6 +200,8 @@ export default function InterviewRoomPage() {
 			setSessionData(null)
 			setSessionTranscripts([])
 			setCurrentQuestion(null)
+			setIsQuestionSpeaking(false)
+			spokenQuestionRef.current = null
 			return
 		}
 
@@ -186,6 +280,7 @@ export default function InterviewRoomPage() {
 						(sessionData.config.question_count ?? 1) - sessionTranscripts.length,
 						1,
 					),
+					focus_areas: sessionData.config.focus_areas,
 					conversation_summary: summarizeConversation(sessionTranscripts),
 				})
 
@@ -207,9 +302,31 @@ export default function InterviewRoomPage() {
 		}
 	}, [currentQuestion, isQuestionLimitReached, isSessionLoading, sessionData, sessionTranscripts])
 
+	useEffect(() => {
+		if (!currentQuestion || isQuestionLoading || isQuestionLimitReached) {
+			if (hasSpeechSynthesis) {
+				window.speechSynthesis.cancel()
+			}
+			setIsQuestionSpeaking(false)
+			return
+		}
+
+		speakCurrentQuestion(currentQuestion)
+
+		return () => {
+			if (hasSpeechSynthesis) {
+				window.speechSynthesis.cancel()
+			}
+		}
+	}, [currentQuestion, hasSpeechSynthesis, isQuestionLimitReached, isQuestionLoading, speakCurrentQuestion])
+
 	const handleStartRecording = async () => {
 		if (!canStartRecording || !currentQuestion) {
 			return
+		}
+
+		if (hasSpeechSynthesis) {
+			window.speechSynthesis.cancel()
 		}
 
 		setApiError(null)
@@ -274,6 +391,7 @@ export default function InterviewRoomPage() {
 						interview_type: updatedSession.config.interview_type,
 						current_score: avgScore,
 						questions_remaining: remaining,
+						focus_areas: updatedSession.config.focus_areas,
 						conversation_summary: summarizeConversation(updatedSession.qa_pairs),
 					})
 
@@ -296,6 +414,12 @@ export default function InterviewRoomPage() {
 	}
 
 	const handleRetry = () => {
+		if (hasSpeechSynthesis) {
+			window.speechSynthesis.cancel()
+		}
+
+		spokenQuestionRef.current = null
+		setIsQuestionSpeaking(false)
 		resetRecording()
 		setApiError(null)
 		setTranscriptResponse(null)
@@ -309,130 +433,221 @@ export default function InterviewRoomPage() {
 		: null
 
 	const effectiveErrorMessage = recorderErrorMessage || getFriendlyErrorMessage(apiError)
+	const aiWindowStatus = isQuestionLoading
+		? 'Generating'
+		: isQuestionSpeaking
+			? 'Speaking'
+			: isQuestionLimitReached
+				? 'Complete'
+				: 'Ready'
+	const userWindowStatus = isRecording ? 'Recording' : uiState === 'processing' ? 'Processing' : 'Ready'
+	const questionAudioLabel = isQuestionSpeaking
+		? 'Speaking now'
+		: hasSpeechSynthesis
+			? 'Waiting to speak'
+			: 'Audio unavailable'
+	const replayQuestion = () => {
+		if (!currentQuestion) {
+			return
+		}
+
+		speakCurrentQuestion(currentQuestion, true)
+	}
 
 	return (
-		<main className="page page-dashboard">
-			<section className="dashboard-card interview-card">
-				<p className="eyebrow">Interview Room</p>
-				<h1>AI Mock Interview</h1>
-				<p className="hero-copy">
-					Question appears first, then record your response. AI evaluates and asks the next question.
-				</p>
-
-				<div className="interview-meta-row">
-					<span className="meta-pill">Session: {hasSessionId ? sessionId : 'missing'}</span>
-					<span className="meta-pill">Question #{displayQuestionNumber}</span>
-					<span className="meta-pill">Elapsed: {formatElapsedTime(elapsedMs)}</span>
-					<span className={`meta-pill state-${uiState}`}>State: {uiState}</span>
-				</div>
-
-				<div className="session-progress-panel">
-					<div className="session-progress-head">
-						<strong>Progress</strong>
-						<span>
-							Completed {completedQuestions} / {progressDenominator} questions
-						</span>
+		<main className="page page-interview">
+			<section className="interview-room">
+				<header className="interview-room__hero">
+					<div>
+						<p className="eyebrow">AI Mock Interview</p>
+						<h1>Interview Room</h1>
 					</div>
-					<div className="session-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={progressDenominator} aria-valuenow={completedQuestions}>
-						<div className="session-progress-fill" style={{ width: `${progressPercent}%` }} />
-					</div>
-					{isQuestionLimitReached && (
-						<p className="session-progress-note">All configured questions are completed for this session.</p>
-					)}
-				</div>
 
-				<div className="question-panel">
-					<h2>Current Question</h2>
-					{isQuestionLoading ? (
-						<p className="hero-copy">Generating your next question...</p>
-					) : currentQuestion ? (
-						<p className="question-text">{currentQuestion}</p>
-					) : (
-						<p className="hero-copy">Interview complete. You can view your analysis from the dashboard.</p>
-					)}
-				</div>
-
-				<WaveformVisualizer
-					values={waveformData}
-					isRecording={isRecording}
-					isProcessing={uiState === 'processing'}
-				/>
-
-				{uiState === 'processing' && (
-					<p className="server-error">Processing audio and generating transcript...</p>
-				)}
-
-				{uiState === 'failed' && <p className="server-error">{effectiveErrorMessage}</p>}
-
-				{uiState === 'done' && transcriptResponse?.transcript_text && (
-					<div className="transcript-panel">
-						<h2>Transcript</h2>
-						<p>{transcriptResponse.transcript_text}</p>
-						<div className="transcript-meta">
-							<span>Provider: {transcriptResponse.provider ?? 'unknown'}</span>
-							<span>Latency: {transcriptResponse.provider_latency_ms ?? 0} ms</span>
-							<span>Audio: {transcriptResponse.audio.duration_seconds}s</span>
+					<div className="interview-room__meta">
+						<div className="interview-meta-row">
+							<span className="meta-pill">Question {displayQuestionNumber}</span>
+						</div>
+						<div className="interview-actions interview-actions--top">
+							<button
+								type="button"
+								className="btn btn-primary btn-animated"
+								onClick={() => {
+									void handleStartRecording()
+								}}
+								disabled={!canStartRecording || !currentQuestion}
+							>
+								{isQuestionLimitReached ? 'Session Complete' : 'Start Recording'}
+							</button>
+							<button
+								type="button"
+								className="btn btn-ghost btn-animated"
+								onClick={() => {
+									void handleStopAndTranscribe()
+								}}
+								disabled={!isRecording || uiState === 'processing'}
+							>
+								Stop and Transcribe
+							</button>
+							<button
+								type="button"
+								className="btn btn-ghost btn-animated"
+								onClick={handleRetry}
+								disabled={uiState === 'processing'}
+							>
+								Retry
+							</button>
+							<Link className="btn btn-primary btn-animated" to="/dashboard">
+								Back to Dashboard
+							</Link>
 						</div>
 					</div>
-				)}
+				</header>
 
-				<div className="transcript-history-panel">
-					<h2>Previous Transcriptions</h2>
-					{isSessionLoading ? (
-						<p className="hero-copy">Loading transcript history...</p>
-					) : sessionTranscripts.length === 0 ? (
-						<p className="hero-copy">No saved transcripts yet for this session.</p>
-					) : (
-						<ul className="transcript-history-list">
-							{sessionTranscripts.map((entry, index) => (
-								<li
-									key={`${entry.question_index}-${entry.created_at}-${index}`}
-									className="transcript-history-item"
-								>
-									<div className="transcript-history-header">
-									<strong>Question #{index + 1}</strong>
-										<span>{entry.recorded_duration_seconds?.toFixed(2) ?? '0.00'}s</span>
+				<div className="interview-room__body">
+					<div className="interview-room__stage">
+						<div className="zoom-grid">
+							<section className={`video-window ${isQuestionSpeaking || isQuestionLoading ? 'is-active' : ''}`}>
+								<div className="video-window__chrome">
+									<span className="video-window__name">AI Interviewer</span>
+									<span className="meta-pill">{aiWindowStatus}</span>
+								</div>
+								<div className="video-window__screen video-window__screen--ai">
+									<div className="video-window__content">
+										<WaveformVisualizer
+											values={waveformData}
+											isRecording={false}
+											isProcessing={isQuestionLoading}
+											isSpeaking={isQuestionSpeaking || isQuestionLoading}
+											label={`AI Interviewer • ${questionAudioLabel}`}
+											variant="ai"
+										/>
+										<div className="video-window__actions">
+											<button
+												type="button"
+												className="btn btn-ghost btn-animated replay-btn"
+												onClick={replayQuestion}
+												disabled={!currentQuestion || isQuestionLoading || uiState === 'processing'}
+											>
+												Replay question audio
+											</button>
+										</div>
 									</div>
-									<p>{entry.transcription}</p>
-								</li>
-							))}
-						</ul>
-					)}
+								</div>
+							</section>
+
+							<section className={`video-window ${isRecording ? 'is-active' : ''}`}>
+								<div className="video-window__chrome">
+									<span className="video-window__name">You</span>
+									<span className="meta-pill">{userWindowStatus}</span>
+								</div>
+								<div className="video-window__screen video-window__screen--user">
+									<div className="video-window__content">
+										<WaveformVisualizer
+											values={waveformData}
+											isRecording={isRecording}
+											isProcessing={uiState === 'processing'}
+											isSpeaking={isRecording || uiState === 'processing'}
+											label={`You • ${formatElapsedTime(elapsedMs)}`}
+											variant="user"
+										/>
+										<p className="video-window__microcopy participant-hint">
+											{isRecording
+												? 'Recording in progress. Stop when your answer is complete.'
+												: 'Ready to respond. Start recording when you are prepared.'}
+										</p>
+									</div>
+								</div>
+							</section>
+						</div>
+
+						<div className="session-progress-panel session-progress-panel--dark">
+							<div className="session-progress-head">
+								<strong>Progress</strong>
+								<span>
+									Completed {completedQuestions} / {progressDenominator} questions
+								</span>
+							</div>
+							<div
+								className="session-progress-track"
+								role="progressbar"
+								aria-valuemin={0}
+								aria-valuemax={progressDenominator}
+								aria-valuenow={completedQuestions}
+							>
+								<div className="session-progress-fill" style={{ width: `${progressPercent}%` }} />
+							</div>
+							{isQuestionLimitReached && (
+								<p className="session-progress-note">All configured questions are complete for this session.</p>
+							)}
+						</div>
+
+						{uiState === 'processing' && (
+							<p className="server-error server-error--light">Processing audio and generating transcript...</p>
+						)}
+
+						{uiState === 'failed' && <p className="server-error server-error--light">{effectiveErrorMessage}</p>}
+
+						{uiState === 'done' && transcriptResponse?.transcript_text && null}
+					</div>
+
+					<aside className="interview-chat-panel">
+						<div className="interview-chat-panel__head">
+							<div>
+								<p className="eyebrow">Chat History</p>
+								<h2>Questions and Answers</h2>
+							</div>
+							<span className="meta-pill">{chatEntries.length} turns</span>
+						</div>
+
+						<div className="interview-chat-panel__body">
+							{isSessionLoading ? (
+								<p className="chat-empty">Loading transcript history...</p>
+							) : chatEntries.length === 0 ? (
+								<p className="chat-empty">No saved turns yet. The conversation will appear here as you continue.</p>
+							) : (
+								chatEntries.map((entry) => (
+									<article key={entry.id} className="chat-turn">
+										<div className="chat-bubble chat-bubble--ai">
+											<div className="chat-bubble__meta">
+												<span>AI interviewer</span>
+												<span>
+													Q{entry.questionIndex} · {formatQuestionType(entry.questionType)}
+												</span>
+											</div>
+											<p>{entry.question}</p>
+											{entry.isLive && (
+												<span className="chat-live-chip">Speaking now</span>
+											)}
+										</div>
+
+										{entry.answer ? (
+											<div className="chat-bubble chat-bubble--user">
+												<div className="chat-bubble__meta">
+													<span>You</span>
+													<span>
+														{entry.durationSeconds !== null ? `${entry.durationSeconds.toFixed(2)}s` : 'Recorded answer'}
+													</span>
+												</div>
+												<p>{entry.answer}</p>
+											</div>
+										) : entry.isLive ? (
+											<div className="chat-typing">Waiting for your response...</div>
+										) : null}
+
+										{entry.evaluationScore !== null && entry.evaluationFeedback && (
+											<div className="chat-feedback">
+												<strong>Feedback</strong>
+												<span>Score {entry.evaluationScore.toFixed(2)}</span>
+												<p>{entry.evaluationFeedback}</p>
+											</div>
+										)}
+									</article>
+								))
+							)}
+						</div>
+					</aside>
 				</div>
 
-				<div className="dashboard-actions">
-					<button
-						type="button"
-						className="btn btn-primary"
-						onClick={() => {
-							void handleStartRecording()
-						}}
-						disabled={!canStartRecording || !currentQuestion}
-					>
-						{isQuestionLimitReached ? 'Session Complete' : 'Start Recording'}
-					</button>
-					<button
-						type="button"
-						className="btn btn-ghost"
-						onClick={() => {
-							void handleStopAndTranscribe()
-						}}
-						disabled={!isRecording || uiState === 'processing'}
-					>
-						Stop and Transcribe
-					</button>
-					<button
-						type="button"
-						className="btn btn-ghost"
-						onClick={handleRetry}
-						disabled={uiState === 'processing'}
-					>
-						Retry
-					</button>
-					<Link className="btn btn-primary" to="/dashboard">
-						Back to Dashboard
-					</Link>
-				</div>
 			</section>
 		</main>
 	)

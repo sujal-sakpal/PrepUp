@@ -28,12 +28,20 @@ export function Navbar() {
 				</NavLink>
 
 				{isAuthenticated ? (
-					<NavLink
-						to="/dashboard"
-						className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-					>
-						Dashboard
-					</NavLink>
+					<>
+						<NavLink
+							to="/dashboard"
+							className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+						>
+							Dashboard
+						</NavLink>
+						<NavLink
+							to="/profile"
+							className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+						>
+							Profile
+						</NavLink>
+					</>
 				) : null}
 			</nav>
 
