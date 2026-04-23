@@ -55,6 +55,7 @@ class TranscriptionResult:
 
 class AudioService:
 	"""Service encapsulating runtime checks and ffmpeg-based normalization."""
+	_resolved_ffmpeg_path: str | None = None
 
 	def __init__(self) -> None:
 		self.allowed_mime_types = {
@@ -63,8 +64,8 @@ class AudioService:
 			if mime.strip()
 		}
 
-	@staticmethod
-	def validate_runtime_configuration() -> None:
+	@classmethod
+	def validate_runtime_configuration(cls) -> None:
 		"""Validate required audio dependencies and configuration at startup."""
 		if not settings.groq_api_key.strip():
 			raise RuntimeError(
@@ -76,22 +77,45 @@ class AudioService:
 				"Missing AUDIO_MODEL. Set a valid Whisper model name in backend/.env."
 			)
 
-		ffmpeg_candidate = settings.audio_ffmpeg_path.strip()
-		if not ffmpeg_candidate:
-			raise RuntimeError(
-				"Missing AUDIO_FFMPEG_PATH. Set it to an ffmpeg executable path or command."
-			)
+		cls._resolve_ffmpeg_path()
 
-		if Path(ffmpeg_candidate).is_absolute():
-			if not Path(ffmpeg_candidate).exists():
+	@classmethod
+	def _resolve_ffmpeg_path(cls) -> str:
+		"""Resolve ffmpeg from env, PATH, or imageio-ffmpeg bundled binary."""
+		if cls._resolved_ffmpeg_path:
+			return cls._resolved_ffmpeg_path
+
+		ffmpeg_candidate = settings.audio_ffmpeg_path.strip()
+
+		if ffmpeg_candidate:
+			if Path(ffmpeg_candidate).is_absolute():
+				if Path(ffmpeg_candidate).exists():
+					cls._resolved_ffmpeg_path = ffmpeg_candidate
+					return ffmpeg_candidate
 				raise RuntimeError(
 					f"Configured AUDIO_FFMPEG_PATH does not exist: {ffmpeg_candidate}"
 				)
-		elif shutil.which(ffmpeg_candidate) is None:
+
+			if shutil.which(ffmpeg_candidate) is not None:
+				cls._resolved_ffmpeg_path = ffmpeg_candidate
+				return ffmpeg_candidate
+
+		try:
+			from imageio_ffmpeg import get_ffmpeg_exe
+		except Exception as exc:
 			raise RuntimeError(
-				f"ffmpeg executable '{ffmpeg_candidate}' not found in PATH. "
-				"Install ffmpeg or set AUDIO_FFMPEG_PATH to the absolute executable path."
+				"ffmpeg executable not found. Set AUDIO_FFMPEG_PATH or install imageio-ffmpeg."
+			) from exc
+
+		resolved_path = get_ffmpeg_exe()
+		if not resolved_path or not Path(resolved_path).exists():
+			raise RuntimeError(
+				"imageio-ffmpeg did not provide a usable ffmpeg binary. "
+				"Set AUDIO_FFMPEG_PATH to a valid executable."
 			)
+
+		cls._resolved_ffmpeg_path = resolved_path
+		return resolved_path
 
 	def ensure_audio_payload_is_valid(
 		self,
@@ -147,6 +171,7 @@ class AudioService:
 	def normalize_to_wav(self, audio_bytes: bytes, mime_type: str) -> NormalizedAudioResult:
 		"""Convert browser audio bytes into 16 kHz mono WAV for Whisper ingestion."""
 		start_time = time.perf_counter()
+		ffmpeg_executable = self._resolve_ffmpeg_path()
 
 		with tempfile.TemporaryDirectory(prefix="prepup-audio-") as temp_dir:
 			temp_path = Path(temp_dir)
@@ -155,7 +180,7 @@ class AudioService:
 			input_path.write_bytes(audio_bytes)
 
 			command = [
-				settings.audio_ffmpeg_path,
+				ffmpeg_executable,
 				"-y",
 				"-i",
 				str(input_path),
