@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Response, UploadFile, status
 from fastapi.responses import JSONResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -233,12 +233,17 @@ async def evaluate_answer(
 		)
 
 
-@router.post("/evaluations", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+	"/evaluations",
+	status_code=status.HTTP_204_NO_CONTENT,
+	response_model=None,
+	response_class=Response,
+)
 async def persist_evaluation(
 	payload: PersistEvaluationRequest,
 	current_user: UserResponse = Depends(get_current_user),
 	db: AsyncIOMotorDatabase = Depends(get_db),
-) -> None:
+) -> Response:
 	"""Persist an LLM evaluation for a specific session question."""
 	service = SessionService(db)
 	await service.update_qa_pair_evaluation(
@@ -247,6 +252,7 @@ async def persist_evaluation(
 		question_index=payload.question_index,
 		evaluation=payload.evaluation.model_dump(),
 	)
+	return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/analysis/final", response_model=FinalAnalysis)
